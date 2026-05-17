@@ -1,0 +1,33 @@
+.ring-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.ring-svg {
+  transform: rotate(-90deg);
+}
+.ring-bg {
+  stroke: var(--border-color);
+}
+.ring-progress {
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ring-text {
+  position: absolute;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+}
+.score {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+.percent {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}

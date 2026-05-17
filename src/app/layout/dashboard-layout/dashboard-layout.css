@@ -1,0 +1,44 @@
+:host { display: block; }
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100dvh;
+}
+
+/* Sidebar is adjacent to main-shell in a flex container */
+.main-shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-width: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-shell.no-sidebar {
+  margin-left: 0;
+}
+
+.content-area {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  animation: fadeSlideIn 0.35s ease both;
+}
+
+.mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
+}
+.mobile-backdrop.show { opacity: 1; pointer-events: auto; }
+
+@media (max-width: 960px) {
+  .main-shell { margin-left: 0 !important; }
+  .content-area { padding: 1.25rem 1rem; }
+}

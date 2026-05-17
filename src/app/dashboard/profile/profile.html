@@ -1,0 +1,157 @@
+<section class="profile-card">
+	<h1>Profile</h1>
+	<p class="subtitle">Manage your personal details and keep your account information up to date.</p>
+
+	<div *ngIf="message" class="alert" [class.alert-error]="isError" [class.alert-success]="!isError">
+		<span class="alert-icon">{{ isError ? '❌' : '✅' }}</span>
+		<span class="alert-text">{{ message }}</span>
+	</div>
+
+	<form (ngSubmit)="saveChanges()">
+		<div class="field-grid">
+			<label class="form-group">
+				<span>Full name</span>
+				<input type="text" name="fullName" [(ngModel)]="profile.fullName" placeholder="Enter your full name" class="form-control" />
+			</label>
+
+			<label class="form-group">
+				<span>Email</span>
+				<input type="email" name="email" [(ngModel)]="profile.email" readonly class="form-control readonly-input" />
+			</label>
+		</div>
+
+		<label class="form-group">
+			<span>Headline</span>
+			<input type="text" name="headline" [(ngModel)]="profile.headline" placeholder="e.g. Senior Software Engineer" class="form-control" />
+		</label>
+
+		<label class="form-group">
+			<span>About</span>
+			<textarea name="about" rows="4" [(ngModel)]="profile.about" placeholder="Tell us about yourself..." class="form-control"></textarea>
+		</label>
+
+		<div class="form-actions">
+			<button type="submit" class="btn-accent" [disabled]="isSaving">
+				<span class="spinner-sm" *ngIf="isSaving"></span>
+				{{ isSaving ? 'Saving...' : 'Save' }}
+			</button>
+		</div>
+	</form>
+</section>
+
+<!-- ── Password Reset Section ──────────────────────────────────── -->
+<section class="profile-card reset-card">
+	<div class="reset-header" (click)="toggleResetPanel()">
+		<div class="reset-header-left">
+			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+			</svg>
+			<div>
+				<h3>Reset Password</h3>
+				<p class="reset-subtitle">Change your account password via email verification</p>
+			</div>
+		</div>
+		<svg class="chevron" [class.open]="showResetPanel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<polyline points="6 9 12 15 18 9"/>
+		</svg>
+	</div>
+
+	<div class="reset-body" *ngIf="showResetPanel">
+		<div *ngIf="resetMessage" class="alert" [class.alert-error]="resetIsError" [class.alert-success]="!resetIsError">
+			<span class="alert-icon">{{ resetIsError ? '❌' : '✅' }}</span>
+			<span class="alert-text">{{ resetMessage }}</span>
+		</div>
+
+		<!-- Step 1: Send OTP -->
+		<div class="reset-step" *ngIf="resetStep === 'idle'">
+			<p class="step-desc">We'll send a 6-digit verification code to <strong>{{ profile.email }}</strong></p>
+			<button type="button" class="btn-accent btn-send-otp" (click)="sendOtp()" [disabled]="isSendingOtp">
+				<span class="spinner-sm" *ngIf="isSendingOtp"></span>
+				<svg *ngIf="!isSendingOtp" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+					<polyline points="22,6 12,13 2,6"/>
+				</svg>
+				{{ isSendingOtp ? 'Sending...' : 'Send OTP' }}
+			</button>
+		</div>
+
+		<!-- Step 2: Enter OTP + New Password -->
+		<div class="reset-step" *ngIf="resetStep === 'otp-sent'">
+			<label class="form-group">
+				<span>Enter OTP</span>
+				<input type="text" name="otp" [(ngModel)]="otp" placeholder="6-digit code" maxlength="6"
+					class="form-control otp-input" autocomplete="one-time-code" />
+			</label>
+
+			<label class="form-group">
+				<span>New Password</span>
+				<div class="password-wrapper">
+					<input [type]="showNewPassword ? 'text' : 'password'" name="newPassword" [(ngModel)]="newPassword"
+						placeholder="Min 6 characters" class="form-control" autocomplete="new-password" />
+					<button type="button" class="eye-toggle" (click)="toggleNewPasswordVisibility()" tabindex="-1">
+						<!-- Eye open -->
+						<svg *ngIf="!showNewPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+						</svg>
+						<!-- Eye closed -->
+						<svg *ngIf="showNewPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+							<line x1="1" y1="1" x2="23" y2="23"/>
+						</svg>
+					</button>
+				</div>
+			</label>
+
+			<!-- Password requirements checklist -->
+			<div class="pwd-rules" *ngIf="newPassword">
+				<div class="pwd-rule" [class.passed]="passwordChecks.minLength">
+					<span class="rule-icon">{{ passwordChecks.minLength ? '✓' : '✗' }}</span>
+					Minimum 6 characters
+				</div>
+				<div class="pwd-rule" [class.passed]="passwordChecks.uppercase">
+					<span class="rule-icon">{{ passwordChecks.uppercase ? '✓' : '✗' }}</span>
+					One uppercase letter (A-Z)
+				</div>
+				<div class="pwd-rule" [class.passed]="passwordChecks.lowercase">
+					<span class="rule-icon">{{ passwordChecks.lowercase ? '✓' : '✗' }}</span>
+					One lowercase letter (a-z)
+				</div>
+				<div class="pwd-rule" [class.passed]="passwordChecks.digit">
+					<span class="rule-icon">{{ passwordChecks.digit ? '✓' : '✗' }}</span>
+					One digit (0-9)
+				</div>
+				<div class="pwd-rule" [class.passed]="passwordChecks.special">
+					<span class="rule-icon">{{ passwordChecks.special ? '✓' : '✗' }}</span>
+					One special character (!&#64;#$%...)
+				</div>
+			</div>
+
+			<label class="form-group">
+				<span>Confirm Password</span>
+				<div class="password-wrapper">
+					<input [type]="showConfirmPassword ? 'text' : 'password'" name="confirmPassword" [(ngModel)]="confirmPassword"
+						placeholder="Re-enter password" class="form-control" autocomplete="new-password" />
+					<button type="button" class="eye-toggle" (click)="toggleConfirmPasswordVisibility()" tabindex="-1">
+						<svg *ngIf="!showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+						</svg>
+						<svg *ngIf="showConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+							<line x1="1" y1="1" x2="23" y2="23"/>
+						</svg>
+					</button>
+				</div>
+			</label>
+
+			<div class="reset-actions">
+				<button type="button" class="btn-accent" (click)="resetPassword()" [disabled]="isResettingPassword">
+					<span class="spinner-sm" *ngIf="isResettingPassword"></span>
+					{{ isResettingPassword ? 'Resetting...' : 'Reset Password' }}
+				</button>
+				<button type="button" class="btn-ghost" (click)="sendOtp()" [disabled]="isSendingOtp">
+					{{ isSendingOtp ? 'Resending...' : 'Resend OTP' }}
+				</button>
+			</div>
+		</div>
+	</div>
+</section>

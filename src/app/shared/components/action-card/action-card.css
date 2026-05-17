@@ -1,0 +1,48 @@
+.action-card {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.action-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+}
+
+.action-card:active {
+  background: var(--surface-alt);
+}
+
+.action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--surface-alt);
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.action-card:hover .action-icon {
+  background: var(--surface-color);
+  box-shadow: var(--shadow-sm);
+  color: var(--accent-base);
+}
+
+.action-label {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
+  color: var(--text-main);
+}

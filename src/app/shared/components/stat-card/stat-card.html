@@ -1,0 +1,17 @@
+<div class="stat-card glass-panel hover-lift">
+  <div class="stat-body">
+    <span class="stat-label">{{ label }}</span>
+    <div class="stat-value-container">
+      @if (value) {
+        <span class="stat-value">{{ value }}</span>
+      }
+      <ng-content select="[visual]"></ng-content>
+    </div>
+    @if (subtext) {
+      <span class="stat-subtext">{{ subtext }}</span>
+    }
+  </div>
+  <div class="stat-icon-wrapper">
+    <ng-content select="[icon]"></ng-content>
+  </div>
+</div>

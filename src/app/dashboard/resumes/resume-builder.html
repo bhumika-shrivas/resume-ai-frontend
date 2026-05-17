@@ -1,0 +1,588 @@
+<!-- Loading -->
+<div *ngIf="isLoading" class="loading-screen">
+  <div class="spinner-ring"></div>
+  <p>Loading your resume...</p>
+</div>
+
+<!-- Error -->
+<div *ngIf="errorMessage && !isLoading" class="error-screen">
+  <h2>Resume Not Found</h2>
+  <p>{{ errorMessage }}</p>
+  <a routerLink="/app/resumes" class="btn-primary">← Back to My Resumes</a>
+</div>
+
+<!-- Builder Layout -->
+<div *ngIf="!isLoading && !errorMessage" class="builder-root">
+
+  <!-- ── TOP BAR ────────────────────────────────────────────────────────── -->
+  <header class="builder-topbar">
+    <a routerLink="/app/resumes" class="topbar-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Resumes
+    </a>
+    <div class="topbar-title">
+      <span class="doc-icon">📄</span>
+      <input class="title-input" [(ngModel)]="resume.title" placeholder="Resume title..." maxlength="80" (input)="onPersonalInfoChange()" />
+      <span class="status-pill" [class.pill-draft]="resume.status !== 'COMPLETE'" [class.pill-done]="resume.status === 'COMPLETE'">
+        {{ resume.status || 'DRAFT' }}
+      </span>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" class="btn-topbar" (click)="duplicateResume()" *ngIf="resumeId" title="Duplicate">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      </button>
+
+      <button type="button" class="btn-topbar btn-export" (click)="setTab('export')" *ngIf="resumeId">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export
+      </button>
+      <button type="button" class="btn-save-main" [class.saving]="saveStatus==='saving'" [class.saved]="saveStatus==='saved'" [class.error]="saveStatus==='error'" (click)="saveResume()" [disabled]="isSaving">
+        {{ saveLabel }}
+      </button>
+    </div>
+  </header>
+
+  <!-- ── BODY ──────────────────────────────────────────────────────────── -->
+  <div class="builder-body">
+
+    <!-- LEFT PANEL -->
+    <aside class="builder-left">
+
+      <!-- Tab nav -->
+      <nav class="tab-nav">
+        <button type="button" class="tab-btn" [class.active]="activeTab==='info'" (click)="setTab('info')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Info
+        </button>
+        <button type="button" class="tab-btn" [class.active]="activeTab==='content'" (click)="setTab('content')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Sections
+        </button>
+        <button type="button" class="tab-btn" [class.active]="activeTab==='design'" (click)="setTab('design')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+          Design
+        </button>
+        <button type="button" class="tab-btn" [class.active]="activeTab==='export'" (click)="setTab('export')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </button>
+      </nav>
+
+      <!-- ── TAB: INFO ───────────────────────────────────────────────────── -->
+      <div class="tab-content" *ngIf="activeTab==='info'">
+
+        <!-- Personal Info Card -->
+        <div class="editor-card">
+          <div class="editor-card-header" (click)="toggleCollapse('personal')">
+            <div class="card-header-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span class="card-title">Personal Information</span>
+            </div>
+            <svg class="chevron" [class.rotated]="!isCollapsed('personal')" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="editor-card-body" *ngIf="!isCollapsed('personal')">
+            <div class="field">
+              <label class="field-label">Full Name <span class="req">*</span></label>
+              <input class="field-input" [(ngModel)]="resume.fullName" (input)="onPersonalInfoChange()" placeholder="e.g. Priya Sharma" />
+            </div>
+            <div class="field">
+              <label class="field-label">Job Title / Headline</label>
+              <input class="field-input" [(ngModel)]="resume.targetJobTitle" (input)="onPersonalInfoChange()" placeholder="e.g. Senior Software Engineer" />
+            </div>
+            <div class="field-grid-2">
+              <div class="field">
+                <label class="field-label">Email</label>
+                <input class="field-input" type="email" [(ngModel)]="resume.email" (input)="onPersonalInfoChange()" placeholder="priya&#64;email.com" />
+              </div>
+              <div class="field">
+                <label class="field-label">Phone</label>
+                <input class="field-input" [(ngModel)]="resume.phone" (input)="onPersonalInfoChange()" placeholder="+91 98765 43210" />
+              </div>
+            </div>
+            <div class="field">
+              <label class="field-label">Location</label>
+              <input class="field-input" [(ngModel)]="resume.location" (input)="onPersonalInfoChange()" placeholder="Bangalore, India" />
+            </div>
+            <div class="field-grid-2">
+              <div class="field">
+                <label class="field-label">LinkedIn</label>
+                <input class="field-input" [(ngModel)]="resume.linkedin" (input)="onPersonalInfoChange()" placeholder="linkedin.com/in/priya" />
+              </div>
+              <div class="field">
+                <label class="field-label">Website / Portfolio</label>
+                <input class="field-input" [(ngModel)]="resume.website" (input)="onPersonalInfoChange()" placeholder="priyasharma.dev" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="editor-card">
+          <div class="editor-card-header" (click)="toggleCollapse('summary')">
+            <div class="card-header-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <span class="card-title">Professional Summary</span>
+            </div>
+            <svg class="chevron" [class.rotated]="!isCollapsed('summary')" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="editor-card-body" *ngIf="!isCollapsed('summary')">
+            <div class="ai-wrap">
+              <textarea class="field-textarea" [(ngModel)]="resume.summary" (input)="onPersonalInfoChange()" rows="4"
+                placeholder="Results-driven engineer with 5+ years of experience..."></textarea>
+              <button type="button" class="ai-pill" (click)="generateAiSummary()" [disabled]="isGeneratingSummary" title="Generate with AI">
+                <svg *ngIf="!isGeneratingSummary" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <div *ngIf="isGeneratingSummary" class="spinner-xs"></div>
+                AI
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ATS Score Card -->
+        <div class="editor-card editor-card-compact" *ngIf="resumeId">
+          <div class="editor-card-header">
+            <div class="card-header-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span class="card-title">ATS Score</span>
+            </div>
+            <button type="button" class="btn-sm" (click)="showAtsModal = true">Check</button>
+          </div>
+          <div class="editor-card-body" style="padding-top: 0;">
+            <div class="ats-bar-wrap">
+              <div class="ats-bar" [class]="atsScoreClass" [style.width.%]="resume.atsScore || 0"></div>
+            </div>
+            <span class="ats-score-text" *ngIf="resume.atsScore" [class]="atsScoreClass">{{ resume.atsScore }}/100</span>
+          </div>
+        </div>
+        <!-- Premium AI Features Card -->
+        <div class="editor-card" *ngIf="resumeId">
+          <div class="editor-card-header">
+            <div class="card-header-left">
+              <span class="card-title" style="color: #f59e0b; display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Premium AI Tools
+              </span>
+            </div>
+          </div>
+          <div class="editor-card-body">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+              <button type="button" class="btn-outline" style="justify-content: flex-start; gap: 8px;" (click)="showCoverLetterModal = true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Write Cover Letter
+              </button>
+              <button type="button" class="btn-outline" style="justify-content: flex-start; gap: 8px;" (click)="showTailorModal = true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                Tailor to Job Posting
+              </button>
+              <button type="button" class="btn-outline" style="justify-content: flex-start; gap: 8px;" (click)="showTranslateModal = true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Translate Resume
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── TAB: SECTIONS ──────────────────────────────────────────────── -->
+      <div class="tab-content" *ngIf="activeTab==='content'">
+
+        <!-- Section list -->
+        <div *ngFor="let section of sections" class="section-card" [class.hidden-section]="!section.isVisible">
+          <div class="section-card-header">
+            <div class="section-card-left">
+              <span class="drag-handle">⠿</span>
+              <span class="section-type-tag">{{ section.sectionType === 'CUSTOM' && section.title ? section.title : getSectionLabel(section.sectionType) }}</span>
+              <span *ngIf="section.aiGenerated" class="ai-tag">AI</span>
+            </div>
+            <div class="section-card-right">
+              <button type="button" class="icon-btn" (click)="improveSection(section)" [disabled]="isImproving.has(getSectionId(section))" title="Improve with AI">
+                <svg *ngIf="!isImproving.has(getSectionId(section))" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <div *ngIf="isImproving.has(getSectionId(section))" class="spinner-xxs"></div>
+              </button>
+              <button type="button" class="icon-btn" (click)="toggleVisibility(section)" [title]="section.isVisible ? 'Hide' : 'Show'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path *ngIf="section.isVisible" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle *ngIf="section.isVisible" cx="12" cy="12" r="3"/>
+                  <path *ngIf="!section.isVisible" d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/>
+                </svg>
+              </button>
+              <button type="button" class="icon-btn danger" (click)="deleteSection(section)" title="Delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- EXPERIENCE / VOLUNTEER -->
+          <div *ngIf="section.sectionType === 'EXPERIENCE' || section.sectionType === 'VOLUNTEER'" class="section-form section-form-spacious">
+            <div class="form-row-2">
+              <div class="form-group"><label class="f-label">{{ section.sectionType === 'VOLUNTEER' ? 'Organization' : 'Company' }}</label>
+                <input class="f-input" [(ngModel)]="getForm(section).company" (input)="onFormChange(section)" placeholder="Company name" /></div>
+              <div class="form-group"><label class="f-label">Role / Title</label>
+                <input class="f-input" [(ngModel)]="getForm(section).role" (input)="onFormChange(section)" placeholder="Software Engineer" /></div>
+            </div>
+            <div class="form-group">
+              <label class="f-label">Location</label>
+              <input class="f-input" [(ngModel)]="getForm(section).location" (input)="onFormChange(section)" placeholder="City, State" />
+            </div>
+            <div class="form-row-2">
+              <div class="form-group"><label class="f-label">Start Date</label>
+                <input class="f-input" type="month" [(ngModel)]="getForm(section).startDate" (change)="onFormChange(section)" /></div>
+              <div class="form-group"><label class="f-label">End Date</label>
+                <input class="f-input" type="month" [(ngModel)]="getForm(section).endDate" (change)="onFormChange(section)" [disabled]="getForm(section).current" />
+                <label class="check-label mt6"><input type="checkbox" [(ngModel)]="getForm(section).current" (change)="onFormChange(section)" /> Currently working here</label></div>
+            </div>
+            <div class="form-group">
+              <div class="f-label-row">
+                <label class="f-label">Key Achievements</label>
+                <button type="button" class="ai-pill ai-pill-sm" (click)="generateAiBullets(section)" [disabled]="isGeneratingBullets.has(getSectionId(section))" title="Generate bullet points with AI">
+                  <svg *ngIf="!isGeneratingBullets.has(getSectionId(section))" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <div *ngIf="isGeneratingBullets.has(getSectionId(section))" class="spinner-xxs"></div>
+                  AI Bullets
+                </button>
+              </div>
+              <div class="rich-toolbar">
+                <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('bold')"><b>B</b></button>
+                <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('italic')"><i>I</i></button>
+                <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('insertUnorderedList')">• List</button>
+              </div>
+              <div #expDesc class="rich-editor rich-editor-tall" contenteditable="true"
+                (blur)="onRichTextBlur(section, 'description', expDesc)"
+                (input)="onRichTextInput(section, 'description', expDesc)"
+                [innerHTML]="getForm(section).description || ''"
+                data-placeholder="• Led a team of 5 engineers...&#10;• Increased performance by 40%..."></div>
+            </div>
+          </div>
+
+          <!-- EDUCATION -->
+          <div *ngIf="section.sectionType === 'EDUCATION'" class="section-form">
+            <div class="form-row-2">
+              <div class="form-group"><label class="f-label">University / School</label>
+                <input class="f-input" [(ngModel)]="getForm(section).school" (input)="onFormChange(section)" placeholder="IIT Delhi" /></div>
+              <div class="form-group"><label class="f-label">Degree</label>
+                <input class="f-input" [(ngModel)]="getForm(section).degree" (input)="onFormChange(section)" placeholder="B.Tech" /></div>
+            </div>
+            <div class="form-row-3">
+              <div class="form-group"><label class="f-label">Field of Study</label>
+                <input class="f-input" [(ngModel)]="getForm(section).field" (input)="onFormChange(section)" placeholder="Computer Science" /></div>
+              <div class="form-group"><label class="f-label">From</label>
+                <input class="f-input" [(ngModel)]="getForm(section).startYear" (input)="onFormChange(section)" placeholder="2020" maxlength="4" /></div>
+              <div class="form-group"><label class="f-label">To</label>
+                <input class="f-input" [(ngModel)]="getForm(section).endYear" (input)="onFormChange(section)" placeholder="2024" maxlength="4" /></div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group"><label class="f-label">GPA / Percentage</label>
+                <input class="f-input" [(ngModel)]="getForm(section).gpa" (input)="onFormChange(section)" placeholder="9.0 / 10" /></div>
+              <div></div>
+            </div>
+          </div>
+
+          <!-- SKILLS -->
+          <div *ngIf="section.sectionType === 'SKILLS'" class="section-form">
+            <div class="form-group">
+              <div class="f-label-row">
+                <label class="f-label">Skills <span class="hint">(comma or newline separated)</span></label>
+                <button type="button" class="ai-pill ai-pill-sm" (click)="suggestAiSkills(section)" [disabled]="isSuggestingSkills.has(getSectionId(section))" title="Suggest skills with AI">
+                  <svg *ngIf="!isSuggestingSkills.has(getSectionId(section))" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <div *ngIf="isSuggestingSkills.has(getSectionId(section))" class="spinner-xxs"></div>
+                  Suggest
+                </button>
+              </div>
+              <textarea class="f-textarea" [(ngModel)]="getForm(section).skills" (input)="onFormChange(section)" rows="5"
+                placeholder="Java, Spring Boot, Angular&#10;Docker, Kubernetes, AWS&#10;MySQL, Redis, MongoDB"></textarea>
+            </div>
+          </div>
+
+          <!-- PROJECTS -->
+          <div *ngIf="section.sectionType === 'PROJECTS'" class="section-form">
+            <div class="form-row-2">
+              <div class="form-group"><label class="f-label">Project Name</label>
+                <input class="f-input" [(ngModel)]="getForm(section).projectName" (input)="onFormChange(section)" placeholder="E-commerce Platform" /></div>
+              <div class="form-group"><label class="f-label">Tech Stack</label>
+                <input class="f-input" [(ngModel)]="getForm(section).techStack" (input)="onFormChange(section)" placeholder="Spring Boot, React, MySQL" /></div>
+            </div>
+            <div class="form-group"><label class="f-label">Project URL</label>
+              <input class="f-input" type="url" [(ngModel)]="getForm(section).url" (input)="onFormChange(section)" placeholder="https://github.com/..." /></div>
+            <div class="form-group"><label class="f-label">Description</label>
+              <div #projDesc class="rich-editor" contenteditable="true"
+                (blur)="onRichTextBlur(section, 'description', projDesc)"
+                (input)="onRichTextInput(section, 'description', projDesc)"
+                [innerHTML]="getForm(section).description || ''"
+                data-placeholder="What did you build and what was the impact?"></div>
+            </div>
+          </div>
+
+          <!-- CERTIFICATIONS -->
+          <div *ngIf="section.sectionType === 'CERTIFICATIONS'" class="section-form">
+            <div class="form-row-2">
+              <div class="form-group"><label class="f-label">Certification Name</label>
+                <input class="f-input" [(ngModel)]="getForm(section).certName" (input)="onFormChange(section)" placeholder="AWS Solutions Architect" /></div>
+              <div class="form-group"><label class="f-label">Issuing Organization</label>
+                <input class="f-input" [(ngModel)]="getForm(section).issuer" (input)="onFormChange(section)" placeholder="Amazon Web Services" /></div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group"><label class="f-label">Issue Date</label>
+                <input class="f-input" type="month" [(ngModel)]="getForm(section).issueDate" (change)="onFormChange(section)" /></div>
+              <div class="form-group"><label class="f-label">Credential URL</label>
+                <input class="f-input" type="url" [(ngModel)]="getForm(section).credentialUrl" (input)="onFormChange(section)" placeholder="https://..." /></div>
+            </div>
+          </div>
+
+          <!-- LANGUAGES -->
+          <div *ngIf="section.sectionType === 'LANGUAGES'" class="section-form">
+            <div *ngFor="let item of getForm(section).items; let i = index" class="lang-row">
+              <input class="f-input" [(ngModel)]="item.language" (input)="onFormChange(section)" placeholder="e.g. English" />
+              <select class="f-select" [(ngModel)]="item.proficiency" (change)="onFormChange(section)">
+                <option *ngFor="let p of proficiencyLevels">{{ p }}</option>
+              </select>
+              <button type="button" class="icon-btn danger" (click)="removeLanguage(section, i)">✕</button>
+            </div>
+            <button type="button" class="btn-add" (click)="addLanguage(section)">+ Add Language</button>
+          </div>
+
+          <!-- SUMMARY -->
+          <div *ngIf="section.sectionType === 'SUMMARY'" class="section-form">
+            <div class="rich-toolbar">
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('bold')"><b>B</b></button>
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('italic')"><i>I</i></button>
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('underline')"><u>U</u></button>
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('insertUnorderedList')">• List</button>
+            </div>
+            <div #summaryEl class="rich-editor" contenteditable="true"
+              (blur)="onRichTextBlur(section, 'text', summaryEl)"
+              (input)="onRichTextInput(section, 'text', summaryEl)"
+              [innerHTML]="getForm(section).text || ''"
+              data-placeholder="Enter content here..."></div>
+          </div>
+
+          <!-- CUSTOM -->
+          <div *ngIf="section.sectionType === 'CUSTOM'" class="section-form">
+            <div class="form-group">
+              <label class="f-label">Section Name</label>
+              <input class="f-input" [(ngModel)]="section.title" (input)="onFormChange(section)" placeholder="e.g. Awards, Publications, Hobbies..." />
+            </div>
+            <div class="rich-toolbar">
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('bold')"><b>B</b></button>
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('italic')"><i>I</i></button>
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('underline')"><u>U</u></button>
+              <button type="button" (mousedown)="$event.preventDefault()" (click)="formatText('insertUnorderedList')">• List</button>
+            </div>
+            <div #customEl class="rich-editor" contenteditable="true"
+              (blur)="onRichTextBlur(section, 'text', customEl)"
+              (input)="onRichTextInput(section, 'text', customEl)"
+              [innerHTML]="getForm(section).text || ''"
+              data-placeholder="Enter content here..."></div>
+          </div>
+        </div>
+
+        <!-- Add section buttons -->
+        <div class="add-section-grid">
+          <p class="add-section-title">Add Section</p>
+          <button type="button" *ngFor="let type of sectionTypes" class="add-section-btn" (click)="addSection(type)">
+            + {{ sectionLabels[type] }}
+          </button>
+        </div>
+      </div>
+
+      <!-- ── TAB: DESIGN ────────────────────────────────────────────────── -->
+      <div class="tab-content" *ngIf="activeTab==='design'">
+        <p class="tab-subtitle">Choose a template for your resume</p>
+        <div class="template-grid-small">
+          <div *ngFor="let t of templates" class="tpl-card"
+               [class.tpl-active]="resume.templateId === t.templateKey || resume.templateId === t.templateId"
+               (click)="selectTemplate(t)">
+            <div class="tpl-thumb">
+              <img *ngIf="t.thumbnailUrl && !t.thumbnailUrl.includes('placehold')" [src]="t.thumbnailUrl" [alt]="t.name" />
+              <div *ngIf="!t.thumbnailUrl || t.thumbnailUrl.includes('placehold')" class="tpl-placeholder">
+                <span>{{ t.name }}</span>
+              </div>
+            </div>
+            <div class="tpl-info">
+              <span class="tpl-name">{{ t.name }}</span>
+              <span class="tpl-cat">{{ t.category }}</span>
+            </div>
+            <div *ngIf="resume.templateId === t.templateKey || resume.templateId === t.templateId" class="tpl-check">✓</div>
+            <span *ngIf="t.isPremium" class="tpl-pro">PRO</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: EXPORT ────────────────────────────────────────────────── -->
+      <div class="tab-content" *ngIf="activeTab==='export'">
+        <p class="tab-subtitle">Download your resume</p>
+
+        <div class="export-card" (click)="exportPdfDirectly()" [class.exporting]="isExporting">
+          <div class="export-icon">📄</div>
+          <div class="export-info">
+            <strong>PDF</strong>
+            <span>Pixel-perfect PDF, exactly as previewed.</span>
+          </div>
+          <div class="export-arrow">
+            <div *ngIf="isExporting" class="spinner-xs"></div>
+            <svg *ngIf="!isExporting" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          </div>
+        </div>
+
+        <div class="export-card" (click)="exportDocx()" [class.locked]="!authService.isPremium()">
+          <div class="export-icon">📝</div>
+          <div class="export-info">
+            <strong>DOCX <span *ngIf="!authService.isPremium()" class="pro-lock">PRO</span></strong>
+            <span>Editable Word document format.</span>
+          </div>
+          <div class="export-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          </div>
+        </div>
+
+        <div class="export-card" (click)="exportJson()" [class.locked]="!authService.isPremium()">
+          <div class="export-icon">📋</div>
+          <div class="export-info">
+            <strong>JSON <span *ngIf="!authService.isPremium()" class="pro-lock">PRO</span></strong>
+            <span>Structured data for integrations.</span>
+          </div>
+          <div class="export-arrow">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          </div>
+        </div>
+
+        <div class="export-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          In the print dialog, set margins to "None" for best results.
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ── LIVE PREVIEW ────────────────────────────────────────────────────── -->
+    <div class="builder-preview-pane">
+      <div class="preview-header">
+        <div class="preview-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Live Preview
+        </div>
+        <span class="preview-tpl-name">{{ selectedTemplate?.name || 'Default' }}</span>
+        <div class="preview-spinner" *ngIf="isRenderingPreview">
+          <div class="spinner-xs"></div>
+        </div>
+      </div>
+
+      <div class="preview-a4-wrap" #previewWrap>
+        <ng-container *ngIf="previewComponentClass; else noTemplate">
+          <div class="preview-scale-container" [style.transform]="'scale(' + previewScale + ')'" [style.width.px]="794" [style.transform-origin]="'top center'">
+            <div class="ng-component-wrapper">
+              <ng-container *ngComponentOutlet="previewComponentClass; inputs: { data: previewComponentData }"></ng-container>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #noTemplate>
+          <div class="empty-preview" style="display:flex; justify-content:center; align-items:center; height:100%; color:#94a3b8; flex-direction:column;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M9 3v18"/><path d="M3 9h6"/><path d="M3 15h6"/></svg>
+            <p style="margin-top:16px;">Select a template from the Design tab to see a live preview.</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+  </div><!-- end builder-body -->
+
+</div><!-- end builder-root -->
+
+<!-- ATS Modal -->
+<app-modal [isOpen]="showAtsModal" title="ATS Compatibility Check" (close)="showAtsModal = false">
+  <div class="modal-form">
+    <p style="color:#94a3b8;font-size:.85rem;margin-bottom:12px">Paste the job description to see how well your resume matches.</p>
+    <label class="f-label">Job Description</label>
+    <textarea class="f-textarea" [(ngModel)]="jobDescription" rows="8" placeholder="Paste the full job posting here..."></textarea>
+    <div style="margin-top:12px">
+      <button type="button" class="btn-save-main" (click)="runAtsCheck()" [disabled]="isCheckingAts || !jobDescription">
+        {{ isCheckingAts ? 'Analyzing...' : 'Analyze' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- ATS Report Modal -->
+<app-modal [isOpen]="!!atsReport" title="ATS Report" (close)="atsReport = null">
+  <div *ngIf="atsReport" class="ats-report">
+    <div class="score-big" [class]="atsScoreClass">{{ atsReport.score }}%</div>
+    <div *ngIf="atsReport.missingKeywords?.length">
+      <h4>Missing Keywords</h4>
+      <div class="kw-grid"><span *ngFor="let kw of atsReport.missingKeywords" class="kw-tag">{{ kw }}</span></div>
+    </div>
+    <div *ngIf="atsReport.recommendations?.length">
+      <h4>Recommendations</h4>
+      <ul><li *ngFor="let r of atsReport.recommendations">{{ r }}</li></ul>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Premium Upgrade Modal -->
+<app-modal [isOpen]="showPremiumModal" title="Premium Feature" (close)="showPremiumModal = false">
+  <div class="modal-form" style="text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">??</div>
+    <h3 style="color: #f8fafc; margin-bottom: 1rem;">Upgrade to Premium</h3>
+    <p style="color: #94a3b8; margin-bottom: 2rem;">
+      This advanced AI feature is exclusively available to Premium members. Upgrade your plan to unlock unlimited Cover Letters, Resume Tailoring, Translations, and full ATS checks!
+    </p>
+    <button type="button" class="btn-save-main" style="width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); border: none;" routerLink="/app/subscription">
+      View Premium Plans
+    </button>
+  </div>
+</app-modal>
+
+<!-- Cover Letter Modal -->
+<app-modal [isOpen]="showCoverLetterModal" title="Generate Cover Letter" (close)="showCoverLetterModal = false">
+  <div class="modal-form">
+    <p style="color:#94a3b8;font-size:.85rem;margin-bottom:12px">Paste the Job Description and our AI will generate a highly tailored Cover Letter based on your resume.</p>
+    <label class="f-label">Job Description</label>
+    <textarea class="f-textarea" [(ngModel)]="clJobDescription" rows="6" placeholder="Paste the full job posting here..."></textarea>
+    
+    <div *ngIf="generatedCoverLetter" style="margin-top: 1rem;">
+      <label class="f-label">Generated Cover Letter</label>
+      <textarea class="f-textarea" [(ngModel)]="generatedCoverLetter" rows="12"></textarea>
+    </div>
+
+    <div style="margin-top:12px; display: flex; gap: 12px;">
+      <button type="button" class="btn-save-main" (click)="generateCoverLetter()" [disabled]="isGeneratingCL || !clJobDescription">
+        {{ isGeneratingCL ? 'Generating...' : '? Generate' }}
+      </button>
+      <button type="button" class="btn-outline" *ngIf="generatedCoverLetter" (click)="showCoverLetterModal = false">Done</button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Tailor Resume Modal -->
+<app-modal [isOpen]="showTailorModal" title="Tailor Resume" (close)="showTailorModal = false">
+  <div class="modal-form">
+    <p style="color:#94a3b8;font-size:.85rem;margin-bottom:12px">Paste the Job Description to automatically rewrite and optimize your entire resume for this specific role.</p>
+    <label class="f-label">Job Description</label>
+    <textarea class="f-textarea" [(ngModel)]="tailorJobDescription" rows="8" placeholder="Paste the full job posting here..."></textarea>
+    
+    <div style="margin-top:12px">
+      <button type="button" class="btn-save-main" (click)="tailorResume()" [disabled]="isTailoring || !tailorJobDescription">
+        {{ isTailoring ? 'Tailoring Resume...' : '? Auto-Tailor' }}
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Translate Resume Modal -->
+<app-modal [isOpen]="showTranslateModal" title="Translate Resume" (close)="showTranslateModal = false">
+  <div class="modal-form">
+    <p style="color:#94a3b8;font-size:.85rem;margin-bottom:12px">Translate your entire resume into another language while maintaining professional formatting.</p>
+    <label class="f-label">Target Language</label>
+    <select class="f-input" [(ngModel)]="targetLanguage">
+      <option value="Spanish">Spanish</option>
+      <option value="French">French</option>
+      <option value="German">German</option>
+      <option value="Chinese">Chinese (Simplified)</option>
+      <option value="Japanese">Japanese</option>
+      <option value="Hindi">Hindi</option>
+    </select>
+    
+    <div style="margin-top:12px">
+      <button type="button" class="btn-save-main" (click)="translateResume()" [disabled]="isTranslating || !targetLanguage">
+        {{ isTranslating ? 'Translating...' : '? Translate' }}
+      </button>
+    </div>
+  </div>
+</app-modal>

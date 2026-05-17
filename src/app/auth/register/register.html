@@ -1,0 +1,164 @@
+<div class="register-page">
+	<div class="background-orb orb-one"></div>
+	<div class="background-orb orb-two"></div>
+
+	<header class="page-topbar">
+		<div class="brand-mark">Resume AI</div>
+
+		<button
+			type="button"
+			class="theme-toggle"
+			(click)="themeService.toggleTheme()"
+			[attr.aria-label]="themeService.currentTheme() === 'light' ? 'Switch to dark theme' : 'Switch to light theme'"
+		>
+			{{ themeService.currentTheme() === 'light' ? 'Dark' : 'Light' }}
+		</button>
+	</header>
+
+	<div class="register-card">
+		<div class="card-header">
+			<h1>Create your account</h1>
+			<p class="subtitle">Start building powerful, ATS-ready resumes in minutes.</p>
+		</div>
+
+		<form #registerForm="ngForm" (ngSubmit)="register()" novalidate>
+			<div
+				class="field"
+				[class.invalid]="(hasSubmitted || fullNameControl.touched) && fullNameControl.invalid"
+			>
+				<span class="input-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" focusable="false">
+						<circle cx="12" cy="8" r="3.5" />
+						<path d="M5 19c1.5-3 4.1-4.5 7-4.5s5.5 1.5 7 4.5" />
+					</svg>
+				</span>
+				<input
+					id="fullName"
+					type="text"
+					name="fullName"
+					[(ngModel)]="fullName"
+					#fullNameControl="ngModel"
+					required
+					autocomplete="name"
+					placeholder=" "
+				/>
+				<label for="fullName">Full name</label>
+			</div>
+
+			<div
+				class="field"
+				[class.invalid]="(hasSubmitted || emailControl.touched) && emailControl.invalid"
+			>
+				<span class="input-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" focusable="false">
+						<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9Z" />
+						<path d="m5 7 7 6 7-6" />
+					</svg>
+				</span>
+				<input
+					id="email"
+					type="email"
+					name="email"
+					[(ngModel)]="email"
+					#emailControl="ngModel"
+					required
+					autocomplete="email"
+					placeholder=" "
+				/>
+				<label for="email">Email address</label>
+			</div>
+
+			<div
+				class="field"
+				[class.invalid]="(hasSubmitted || passwordControl.touched) && passwordControl.invalid"
+			>
+				<span class="input-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" focusable="false">
+						<path d="M7.5 10V7a4.5 4.5 0 1 1 9 0v3" />
+						<rect x="5" y="10" width="14" height="10" rx="2" ry="2" />
+						<path d="M12 14.25v2.5" />
+					</svg>
+				</span>
+				<input
+					id="password"
+					[type]="isPasswordVisible ? 'text' : 'password'"
+					name="password"
+					[(ngModel)]="password"
+					#passwordControl="ngModel"
+					required
+					minlength="6"
+					autocomplete="new-password"
+					placeholder=" "
+				/>
+				<label for="password">Password</label>
+
+				<button
+					type="button"
+					class="password-toggle"
+					(click)="togglePasswordVisibility()"
+					[attr.aria-label]="isPasswordVisible ? 'Hide password' : 'Show password'"
+				>
+					{{ isPasswordVisible ? 'Hide' : 'Show' }}
+				</button>
+			</div>
+
+			<div
+				class="field"
+				[class.invalid]="(hasSubmitted || confirmPasswordControl.touched) && confirmPasswordControl.invalid"
+			>
+				<span class="input-icon" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" focusable="false">
+						<path d="M7.5 10V7a4.5 4.5 0 1 1 9 0v3" />
+						<rect x="5" y="10" width="14" height="10" rx="2" ry="2" />
+						<path d="M12 14.25v2.5" />
+					</svg>
+				</span>
+				<input
+					id="confirmPassword"
+					[type]="isConfirmPasswordVisible ? 'text' : 'password'"
+					name="confirmPassword"
+					[(ngModel)]="confirmPassword"
+					#confirmPasswordControl="ngModel"
+					required
+					minlength="6"
+					autocomplete="new-password"
+					placeholder=" "
+				/>
+				<label for="confirmPassword">Confirm password</label>
+
+				<button
+					type="button"
+					class="password-toggle"
+					(click)="toggleConfirmPasswordVisibility()"
+					[attr.aria-label]="isConfirmPasswordVisible ? 'Hide confirm password' : 'Show confirm password'"
+				>
+					{{ isConfirmPasswordVisible ? 'Hide' : 'Show' }}
+				</button>
+			</div>
+
+			@if (errorMessage) {
+				<p class="error-message">{{ errorMessage }}</p>
+			}
+
+			@if (successMessage) {
+				<p class="success-message">{{ successMessage }}</p>
+			}
+
+			<button
+				type="submit"
+				class="primary-button"
+				[disabled]="isLoading || registerForm.invalid"
+			>
+				@if (isLoading) {
+					<span class="spinner" aria-hidden="true"></span>
+				}
+				<span>{{ isLoading ? 'Creating account...' : 'Create an account' }}</span>
+			</button>
+		</form>
+
+		<p class="register-link">
+			Already have an account?
+			<a href="/">Sign in</a>
+		</p>
+	</div>
+</div>

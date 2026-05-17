@@ -1,0 +1,55 @@
+<aside class="sidebar" [class.collapsed]="collapsed" [class.mobile-open]="mobileOpen">
+  <div class="sidebar-inner">
+
+    <!-- Section 1: Explore -->
+    <div class="sidebar-section-label" *ngIf="!collapsed">Explore</div>
+    <nav class="sidebar-section">
+      <a *ngFor="let item of publicItems"
+         [routerLink]="item.route"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{ exact: item.exact || false }"
+         class="sidebar-item"
+         (click)="onItemClick()"
+         [title]="collapsed ? item.label : ''">
+        <span class="nav-icon" [innerHTML]="item.icon"></span>
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <!-- Section 2: Workspace (authenticated) -->
+    <ng-container *ngIf="authService.isAuthenticated()">
+      <div class="sidebar-section-label" *ngIf="!collapsed">Workspace</div>
+      <nav class="sidebar-section">
+        <a *ngFor="let item of appItems"
+           [routerLink]="item.route"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: item.exact || false }"
+           class="sidebar-item"
+           (click)="onItemClick()"
+           [title]="collapsed ? item.label : ''">
+          <span class="nav-icon" [innerHTML]="item.icon"></span>
+          <span class="nav-label">{{ item.label }}</span>
+          <span class="pro-lock" *ngIf="item.premiumOnly && !authService.isPremium()">PRO</span>
+        </a>
+      </nav>
+    </ng-container>
+
+    <!-- Bottom: User Profile Card -->
+    <div class="sidebar-footer" *ngIf="authService.isAuthenticated()">
+      <div class="sidebar-divider"></div>
+      
+      <a routerLink="/app/profile" class="sidebar-user" (click)="onItemClick()" [title]="collapsed ? 'Profile' : ''">
+        <span class="sidebar-avatar" [class.premium-avatar]="authService.isPremium()">
+          {{ authService.getCurrentUser()?.email?.substring(0, 2)?.toUpperCase() || 'U' }}
+        </span>
+        <div class="sidebar-user-info" *ngIf="!collapsed">
+          <span class="sidebar-user-name">{{ authService.getCurrentUser()?.email?.split('@')[0] }}</span>
+          <span class="sidebar-plan-tag" [class.plan-premium]="authService.isPremium()">
+            {{ authService.isPremium() ? '⚡ Premium' : 'Free Plan' }}
+          </span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</aside>

@@ -1,0 +1,366 @@
+<div class="admin-dashboard">
+  <div class="admin-content">
+    <!-- Users Tab -->
+    <div *ngIf="activeTab === 'users'" class="tab-pane">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Plan</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users">
+            <td>
+              <div class="user-cell">
+                <span class="u-name">{{ user.fullName }}</span>
+                <span class="u-email">{{ user.email }}</span>
+              </div>
+            </td>
+            <td>
+              <span *ngIf="isSuperAdmin(user)" class="badge super-admin">SUPER ADMIN</span>
+              <select *ngIf="!isSuperAdmin(user)" [ngModel]="user.role" (ngModelChange)="updateUserRole(user.id, $event)" class="admin-select">
+                <option value="USER">USER</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </td>
+            <td>
+              <span *ngIf="isSuperAdmin(user)" class="badge premium-lock">PREMIUM</span>
+              <select *ngIf="!isSuperAdmin(user)" [ngModel]="user.subscriptionPlan" (ngModelChange)="updateUserPlan(user.id, $event)" class="admin-select">
+                <option value="FREE">FREE</option>
+                <option value="PREMIUM">PREMIUM</option>
+              </select>
+            </td>
+            <td>
+              <span class="badge" [class.success]="user.active" [class.danger]="!user.active">
+                {{ user.active ? 'ACTIVE' : 'SUSPENDED' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-group" *ngIf="!isSuperAdmin(user)">
+                <button class="btn-text" (click)="toggleUserStatus(user)">
+                  {{ user.active ? 'Suspend' : 'Activate' }}
+                </button>
+                <button class="btn-text danger" (click)="deleteUser(user.id)">
+                  Delete
+                </button>
+              </div>
+              <span *ngIf="isSuperAdmin(user)" class="text-muted">Protected</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Templates Tab -->
+    <div *ngIf="activeTab === 'templates'" class="tab-pane">
+      <div class="tab-header">
+        <h3>Templates ({{ templates.length }})</h3>
+        <button class="btn-primary" (click)="openEditor()">Add New Template</button>
+      </div>
+      
+      <div class="template-grid">
+        <div *ngFor="let t of templates" class="admin-template-card">
+          <div class="t-thumb">
+            <img *ngIf="t.thumbnailUrl" [src]="t.thumbnailUrl" alt="Thumbnail" />
+            <div *ngIf="!t.thumbnailUrl" class="t-placeholder">No Preview</div>
+            <span class="t-plan-badge" [class.premium]="t.isPremium">{{ t.isPremium ? 'PRO' : 'FREE' }}</span>
+          </div>
+          <div class="info">
+            <h4>{{ t.name }}</h4>
+            <p>{{ t.category }} • {{ t.usageCount }} uses</p>
+          </div>
+          <div class="actions">
+            <button class="btn-sm" (click)="openEditor(t)">Edit</button>
+            <button class="btn-sm danger" (click)="deleteTemplate(t.templateId)">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div *ngIf="activeTab === 'analytics'" class="tab-pane">
+      <div class="stats-grid" style="margin-bottom: 24px;">
+        <div class="stat-card">
+          <span class="stat-label">Total Users</span>
+          <span class="stat-value">{{ stats.totalUsers || 0 }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Premium Users</span>
+          <span class="stat-value premium">{{ stats.premiumUsers || 0 }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total Resumes</span>
+          <span class="stat-value">{{ stats.totalResumes || 0 }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total AI Hits</span>
+          <span class="stat-value">{{ (stats.totalAiCalls || 0) + (stats.totalAtsChecks || 0) }}</span>
+        </div>
+      </div>
+
+      <div class="analytics-layout">
+        <div class="analytics-main">
+          <div class="analytics-card chart-card">
+            <div class="card-header-flex">
+              <h3>Monthly Growth</h3>
+              <select class="admin-select-sm">
+                <option>Last 6 Months</option>
+                <option>Last Year</option>
+              </select>
+            </div>
+            <div class="growth-chart-container">
+              <div class="bar-group" *ngFor="let m of growthData">
+                <div class="bar" [style.height.%]="m.percent">
+                  <span class="bar-value">{{ m.count }}</span>
+                </div>
+                <span class="bar-label">{{ m.month }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card">
+            <h3>Top Performing Templates</h3>
+            <table class="admin-table-simple">
+              <thead>
+                <tr>
+                  <th>Template</th>
+                  <th>Category</th>
+                  <th>Usage</th>
+                  <th>Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let t of templates | slice:0:5">
+                  <td>{{ t.name }}</td>
+                  <td>{{ t.category }}</td>
+                  <td>{{ (t.usageCount).toLocaleString() }}</td>
+                  <td class="trend-up">↑ 12%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="analytics-sidebar">
+          <div class="analytics-card distribution-card">
+            <h3>Usage Distribution</h3>
+            <div class="distribution-wrap">
+              <div class="dist-circle">
+                <div class="dist-segment ai" [style.--p]="70"></div>
+                <div class="dist-segment ats" [style.--p]="30"></div>
+                <div class="dist-inner">
+                  <span class="total-val">{{ stats.totalAiCalls + stats.totalAtsChecks }}</span>
+                  <span class="total-lbl">Total AI Hits</span>
+                </div>
+              </div>
+              <div class="dist-legend">
+                <div class="legend-item"><span class="dot ai"></span> AI Content (70%)</div>
+                <div class="legend-item"><span class="dot ats"></span> ATS Checks (30%)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="analytics-card platform-health">
+            <h3>Platform Health</h3>
+            <div class="health-item">
+              <span class="h-label">Server Response</span>
+              <span class="h-value success">99.9%</span>
+            </div>
+            <div class="health-item">
+              <span class="h-label">AI Queue Time</span>
+              <span class="h-value">1.2s</span>
+            </div>
+            <div class="health-item">
+              <span class="h-label">Storage Usage</span>
+              <span class="h-value warning">82%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Stats Tab -->
+    <div *ngIf="activeTab === 'ai'" class="tab-pane">
+      <div class="tab-header">
+        <h3>AI Token Usage & Cost</h3>
+      </div>
+      <div class="stats-grid" *ngIf="aiStats">
+        <div class="stat-card">
+          <span class="stat-label">Total Tokens</span>
+          <span class="stat-value">{{ aiStats.totalTokens | number }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Gemini Pro Tokens</span>
+          <span class="stat-value premium">{{ aiStats.geminiProTokens | number }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Gemini Flash Tokens</span>
+          <span class="stat-value">{{ aiStats.geminiFlashTokens | number }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Estimated Cost</span>
+          <span class="stat-value danger">${{ aiStats.estimatedCostUsd | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="analytics-card mt-4">
+        <h3>AI Pricing Configuration (USD per 1K Tokens)</h3>
+        <table class="admin-table-simple mt-2">
+          <thead>
+            <tr>
+              <th>Model Name</th>
+              <th>Cost per 1K Tokens ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let config of pricingConfigs">
+              <td><strong>{{ config.modelName }}</strong></td>
+              <td>
+                <input type="number" [(ngModel)]="config.costPer1kTokens" step="0.001" class="admin-input-sm">
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <button class="btn-primary mt-2" (click)="savePricing()">Save Pricing</button>
+      </div>
+
+      <div class="analytics-card mt-4">
+        <h3>Token Quota Utilisation</h3>
+        <p>Premium users: unlimited. Free users: limited to 5 AI calls per month.</p>
+        <p>Check Users tab for individual plan limits.</p>
+      </div>
+    </div>
+
+    <!-- Broadcast Tab -->
+    <div *ngIf="activeTab === 'broadcast'" class="tab-pane">
+      <div class="tab-header">
+        <h3>Send Broadcast Notification</h3>
+      </div>
+      <div class="admin-form-card">
+        <div class="form-group">
+          <label>Target Audience</label>
+          <select [(ngModel)]="broadcastForm.targetAudience" class="admin-select">
+            <option value="ALL">All Users</option>
+            <option value="PREMIUM">Premium Users Only</option>
+            <option value="FREE">Free Users Only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notification Title</label>
+          <input type="text" [(ngModel)]="broadcastForm.title" placeholder="System Maintenance">
+        </div>
+        <div class="form-group">
+          <label>Message Content</label>
+          <textarea [(ngModel)]="broadcastForm.message" rows="5" placeholder="Enter message here..."></textarea>
+        </div>
+        <button class="btn-primary mt-2" (click)="sendBroadcast()">Send to Users</button>
+      </div>
+    </div>
+
+    <!-- Audit Logs Tab -->
+    <div *ngIf="activeTab === 'audit'" class="tab-pane">
+      <div class="tab-header">
+        <h3>System Audit Logs</h3>
+        <button class="btn-secondary" (click)="loadAuditLogs()">Refresh Logs</button>
+      </div>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Admin ID / Email</th>
+            <th>Action</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of auditLogs">
+            <td>{{ log.createdAt | date:'short' }}</td>
+            <td>{{ log.userId }}</td>
+            <td><span class="badge">{{ log.action }}</span></td>
+            <td>{{ log.details }}</td>
+          </tr>
+          <tr *ngIf="auditLogs.length === 0">
+            <td colspan="4" class="text-center">No audit logs found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+
+
+  </div>
+</div>
+
+<!-- Template Editor Modal -->
+<div class="modal-backdrop" *ngIf="showEditor">
+  <div class="modal-card editor-modal" style="max-width: 1200px; width: 95vw; height: 90vh; display: flex; flex-direction: column;">
+    <div class="modal-header">
+      <h2>{{ editingTemplate ? 'Edit Template' : 'New Template' }}</h2>
+      <button class="close-btn" (click)="showEditor = false">&times;</button>
+    </div>
+    <div class="editor-content" style="flex: 1; display: flex; overflow: hidden;">
+      <div class="editor-sidebar" style="width: 350px; overflow-y: auto; padding-right: 20px; border-right: 1px solid #e2e8f0;">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" [(ngModel)]="editorForm.name" placeholder="Modern Professional">
+        </div>
+        <div class="form-group">
+          <label>Slug</label>
+          <input type="text" [(ngModel)]="editorForm.slug" placeholder="modern-professional">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select [(ngModel)]="editorForm.category" class="admin-select">
+            <option value="Professional">Professional</option>
+            <option value="Creative">Creative</option>
+            <option value="Minimalist">Minimalist</option>
+            <option value="Academic">Academic</option>
+            <option value="Entry Level">Entry Level</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea [(ngModel)]="editorForm.description" rows="3" class="form-textarea-sm" placeholder="A brief summary for guests..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Tags (comma-separated)</label>
+          <input type="text" [(ngModel)]="editorForm.tags" placeholder="professional, clean, ATS">
+        </div>
+        <div class="form-row" style="margin-bottom: 16px;">
+          <label class="check-label" style="margin-right: 16px;">
+            <input type="checkbox" [(ngModel)]="editorForm.isPremium"> Premium Template
+          </label>
+          <label class="check-label">
+            <input type="checkbox" [(ngModel)]="editorForm.isActive"> Active
+          </label>
+        </div>
+        <div class="form-group">
+          <label>Thumbnail URL</label>
+          <input type="text" [(ngModel)]="editorForm.thumbnailUrl" placeholder="https://placehold.co/400x560...">
+        </div>
+        <div class="form-group" style="margin-top: auto; padding-top: 20px;">
+          <label>Print CSS</label>
+          <textarea [(ngModel)]="editorForm.printCss" rows="3" class="code-textarea" style="min-height: 80px;" placeholder="@page{size:A4;margin:10mm}"></textarea>
+        </div>
+      </div>
+      <div class="editor-main" style="flex: 1; padding-left: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto;">
+        <div class="code-editor-wrap" style="flex: 1; display: flex; flex-direction: column;">
+          <label style="font-weight: 600; margin-bottom: 8px;">HTML Layout (Mustache syntax allowed)</label>
+          <textarea [(ngModel)]="editorForm.htmlLayout" class="code-textarea" style="flex: 1; min-height: 250px; font-family: monospace; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+        </div>
+        <div class="code-editor-wrap" style="flex: 1; display: flex; flex-direction: column;">
+          <label style="font-weight: 600; margin-bottom: 8px;">CSS Styles</label>
+          <textarea [(ngModel)]="editorForm.cssStyles" class="code-textarea" style="flex: 1; min-height: 250px; font-family: monospace; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 12px;">
+      <button class="btn-secondary" (click)="showEditor = false">Cancel</button>
+      <button class="btn-primary" (click)="saveTemplate()">Save Template</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<div class="dashboard-layout">
+  <app-sidebar
+    *ngIf="authService.isAuthenticated$ | async"
+    [collapsed]="isSidebarCollapsed"
+    [mobileOpen]="isMobileSidebarOpen"
+    (closeRequested)="closeMobileSidebar()"
+  ></app-sidebar>
+
+  <section class="main-shell" 
+           [class.sidebar-collapsed]="isSidebarCollapsed"
+           [class.no-sidebar]="!(authService.isAuthenticated$ | async)">
+    <app-navbar (menuToggle)="onMenuToggle()"></app-navbar>
+
+    <main class="content-area" (click)="closeMobileSidebar()">
+      <router-outlet></router-outlet>
+    </main>
+  </section>
+
+  <div class="mobile-backdrop" [class.show]="isMobileSidebarOpen" (click)="closeMobileSidebar()"></div>
+</div>

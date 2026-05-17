@@ -1,0 +1,28 @@
+<div class="ring-container" [style.width.px]="size" [style.height.px]="size">
+  <svg [attr.width]="size" [attr.height]="size" class="ring-svg">
+    <!-- Background circle -->
+    <circle
+      class="ring-bg"
+      [attr.cx]="size / 2"
+      [attr.cy]="size / 2"
+      [attr.r]="(size - strokeWidth) / 2"
+      fill="none"
+      [attr.stroke-width]="strokeWidth"
+    />
+    <!-- Progress circle -->
+    <circle
+      class="ring-progress"
+      [attr.cx]="size / 2"
+      [attr.cy]="size / 2"
+      [attr.r]="(size - strokeWidth) / 2"
+      fill="none"
+      [attr.stroke-width]="strokeWidth"
+      [attr.stroke-dasharray]="circumference"
+      [attr.stroke-dashoffset]="offset"
+      [style.stroke]="getColor()"
+    />
+  </svg>
+  <div class="ring-text">
+    <span class="score">{{ score }}</span><span class="percent">%</span>
+  </div>
+</div>

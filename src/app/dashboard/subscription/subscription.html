@@ -1,0 +1,80 @@
+<div class="subscription-page">
+  <div class="header-section">
+    <h1>Supercharge Your Career</h1>
+    <p>Unlock the full power of AI to land your dream job faster.</p>
+  </div>
+
+  <div class="plans-container">
+    <!-- Free Plan -->
+    <div class="plan-card" [class.active]="currentPlan === 'FREE'">
+      <div class="plan-header">
+        <span class="badge" *ngIf="currentPlan === 'FREE'">Current Plan</span>
+        <h2>Free</h2>
+        <div class="price">₹0 <span>/lifetime</span></div>
+      </div>
+      <ul class="features">
+        <li class="check">3 Resumes</li>
+        <li class="check">5 AI Operations / mo</li>
+        <li class="check">3 ATS Checks / mo</li>
+        <li class="check">Standard PDF Export</li>
+        <li class="x">Unlimited AI Power</li>
+        <li class="x">Premium Templates</li>
+      </ul>
+      <button class="plan-btn secondary" disabled>Current Plan</button>
+    </div>
+
+    <!-- Premium Plan -->
+    <div class="plan-card premium" [class.active]="currentPlan === 'PREMIUM'">
+      <div class="plan-header">
+        <span class="badge premium" *ngIf="currentPlan === 'PREMIUM'">Current Plan</span>
+        <span class="badge best-value" *ngIf="currentPlan !== 'PREMIUM'">Lifetime Access</span>
+        <h2>Premium</h2>
+        <div class="price">₹499 <span>/one-time</span></div>
+      </div>
+      <ul class="features">
+        <li class="check">Unlimited Resumes</li>
+        <li class="check">Unlimited AI Operations</li>
+        <li class="check">Unlimited ATS Checks</li>
+        <li class="check">PDF, DOCX & JSON Exports</li>
+        <li class="check">Full Template Gallery</li>
+      </ul>
+      <button class="plan-btn primary" (click)="upgrade()" [disabled]="isUpgrading || currentPlan === 'PREMIUM'">
+        {{ isUpgrading ? 'Initiating...' : (currentPlan === 'PREMIUM' ? 'Current Plan' : 'Upgrade to Premium') }}
+      </button>
+    </div>
+  </div>
+
+  <!-- OTP Modal -->
+  <div class="modal-backdrop" *ngIf="showOtpModal">
+    <div class="otp-modal">
+      <div class="modal-header">
+        <h3>Verify Activation</h3>
+        <button class="close-btn" (click)="closeOtpModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>A verification code has been sent to your email. Enter it below to activate your Premium lifetime access.</p>
+        
+        <div class="otp-input-wrap">
+          <input type="text" [(ngModel)]="otpValue" maxlength="6" placeholder="000000" class="otp-field" (keyup.enter)="verifyOtp()">
+        </div>
+        
+        <p class="error-msg" *ngIf="otpError">{{ otpError }}</p>
+
+        <div class="modal-actions">
+          <button class="btn-verify" [disabled]="isVerifyingOtp || otpValue.length !== 6" (click)="verifyOtp()">
+            {{ isVerifyingOtp ? 'Verifying...' : 'Activate Premium' }}
+          </button>
+          <button class="btn-resend" (click)="resendOtp()" [disabled]="isVerifyingOtp">Resend OTP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="faq-section">
+    <h3>Frequently Asked Questions</h3>
+    <div class="faq-item">
+      <h4>Is this a recurring subscription?</h4>
+      <p>No, this is a one-time payment for lifetime access to all current and future premium features.</p>
+    </div>
+  </div>
+</div>

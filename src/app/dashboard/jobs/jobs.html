@@ -1,0 +1,255 @@
+<div class="jm-page animate-in">
+
+  <!-- ══ Page Header ══════════════════════════════════════════════════════ -->
+  <header class="jm-header">
+    <div class="jm-header-text">
+      <h1 class="jm-title">Job Matching</h1>
+      <p class="jm-subtitle">Search live LinkedIn jobs, save the ones you love, and track AI history.</p>
+    </div>
+  </header>
+
+  <!-- ══ Tab Navigation ════════════════════════════════════════════════════ -->
+  <nav class="jm-tabs">
+    <button class="jm-tab" [class.jm-tab--active]="activeTab === 'search'" (click)="setTab('search')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      Find Jobs
+    </button>
+    <button class="jm-tab" [class.jm-tab--active]="activeTab === 'bookmarks'" (click)="setTab('bookmarks')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+      Bookmarks
+      <span class="jm-badge jm-badge--gold" *ngIf="bookmarkCount > 0">{{ bookmarkCount }}</span>
+    </button>
+    <button class="jm-tab" [class.jm-tab--active]="activeTab === 'history'" (click)="setTab('history')">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+      AI History
+    </button>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       TAB 1 — FIND JOBS
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab === 'search'" class="jm-panel">
+
+    <!-- Search bar -->
+    <div class="jm-searchbox">
+      <div class="jm-searchbox-inner">
+        <div class="jm-sf">
+          <svg class="jm-sf-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="job-search-query"
+                 type="text"
+                 [(ngModel)]="searchQuery"
+                 (keyup.enter)="searchJobs()"
+                 autocomplete="off"
+                 placeholder="Job title, keywords, or company"
+                 class="jm-sf-input" />
+        </div>
+        <div class="jm-sf-sep"></div>
+        <div class="jm-sf" style="position: relative;">
+          <svg class="jm-sf-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <input id="job-search-location"
+                 type="text"
+                 [(ngModel)]="searchLocation"
+                 (keyup.enter)="searchJobs()"
+                 autocomplete="off"
+                 placeholder="City, country, or Remote"
+                 class="jm-sf-input" />
+        </div>
+        <button id="search-jobs-btn"
+                class="jm-btn-search"
+                (click)="searchJobs()"
+                [disabled]="isSearching">
+          <ng-container *ngIf="!isSearching">Search</ng-container>
+          <span *ngIf="isSearching" class="jm-dots"><span></span><span></span><span></span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Results header -->
+    <div class="jm-source-row" *ngIf="linkedinJobs.length > 0">
+      <div class="jm-src-btn jm-src-btn--active">
+        <span class="jm-src-pill jm-src-pill--li">in</span>
+        LinkedIn
+        <span class="jm-src-cnt">{{ linkedinJobs.length }}</span>
+      </div>
+    </div>
+
+    <!-- Skeleton loader -->
+    <div class="jm-sk-list" *ngIf="isSearching">
+      <div class="jm-sk-job" *ngFor="let i of [1,2,3,4,5]">
+        <div class="jm-sk-logo"></div>
+        <div class="jm-sk-body">
+          <div class="jm-sk-line jm-sk-line--w60"></div>
+          <div class="jm-sk-line jm-sk-line--w40"></div>
+          <div class="jm-sk-line jm-sk-line--w80"></div>
+        </div>
+        <div class="jm-sk-btns">
+          <div class="jm-sk-btn"></div>
+          <div class="jm-sk-btn"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job cards -->
+    <div class="jm-job-list" *ngIf="!isSearching && linkedinJobs.length > 0">
+      <div class="jm-job" *ngFor="let job of linkedinJobs; let i = index">
+        <div class="jm-job-logo jm-job-logo--li">
+          {{ (job.company || '?')[0].toUpperCase() }}
+        </div>
+        <div class="jm-job-info">
+          <div class="jm-job-top">
+            <h3 class="jm-job-title">{{ job.title }}</h3>
+            <span class="jm-job-src jm-job-src--li">LINKEDIN</span>
+          </div>
+          <p class="jm-job-company">{{ job.company }}</p>
+          <div class="jm-job-meta">
+            <span *ngIf="job.location"> {{ job.location }}</span>
+            <span *ngIf="job.salary"> {{ job.salary }}</span>
+            <span *ngIf="job.postedAt"> {{ job.postedAt }}</span>
+          </div>
+          <p class="jm-job-desc">{{ job.description | slice:0:160 }}{{ job.description.length > 160 ? '…' : '' }}</p>
+        </div>
+        <div class="jm-job-actions">
+          <a *ngIf="job.url" [href]="job.url" target="_blank" rel="noopener" class="jm-btn-outline">View</a>
+          <button class="jm-btn-save"
+                  [id]="'save-job-' + i"
+                  (click)="saveJob(job)"
+                  [disabled]="isSaving(job) || isAlreadySaved(job)">
+            <ng-container *ngIf="!isSaving(job) && !isAlreadySaved(job)">🔖 Save</ng-container>
+            <ng-container *ngIf="isAlreadySaved(job)">✓ Saved</ng-container>
+            <span *ngIf="isSaving(job)" class="jm-dots"><span></span><span></span><span></span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       TAB 2 — BOOKMARKS
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab === 'bookmarks'" class="jm-panel">
+    <div class="jm-sec-header">
+      <h2 class="jm-sec-title">Saved Jobs <span class="jm-sec-cnt">{{ bookmarks.length }}</span></h2>
+      <p class="jm-sec-sub">Job postings you've saved. Click View to apply directly.</p>
+    </div>
+
+    <!-- Skeleton -->
+    <div class="jm-sk-list" *ngIf="isLoadingBookmarks">
+      <div class="jm-sk-job" *ngFor="let i of [1,2,3]">
+        <div class="jm-sk-logo"></div>
+        <div class="jm-sk-body">
+          <div class="jm-sk-line jm-sk-line--w60"></div>
+          <div class="jm-sk-line jm-sk-line--w40"></div>
+          <div class="jm-sk-line jm-sk-line--w80"></div>
+        </div>
+        <div class="jm-sk-btns"><div class="jm-sk-btn"></div><div class="jm-sk-btn"></div></div>
+      </div>
+    </div>
+
+    <!-- Saved job cards — same style as search results -->
+    <div class="jm-job-list" *ngIf="!isLoadingBookmarks && bookmarks.length > 0">
+      <div class="jm-job" *ngFor="let b of bookmarks">
+        <div class="jm-job-logo jm-job-logo--li">
+          {{ (b.companyName || '?')[0].toUpperCase() }}
+        </div>
+        <div class="jm-job-info">
+          <div class="jm-job-top">
+            <h3 class="jm-job-title">{{ b.jobTitle }}</h3>
+            <span class="jm-job-src jm-job-src--li">{{ b.source }}</span>
+          </div>
+          <p class="jm-job-company">{{ b.companyName }}</p>
+          <div class="jm-job-meta">
+            <span *ngIf="b.location"> {{ b.location }}</span>
+            <span *ngIf="b.salary"> {{ b.salary }}</span>
+            <span *ngIf="b.postedAt"> {{ b.postedAt }}</span>
+            <span> Saved {{ b.matchedAt | date:'MMM d, y' }}</span>
+          </div>
+          <p class="jm-job-desc" *ngIf="b.jobDescription">{{ b.jobDescription | slice:0:160 }}{{ b.jobDescription.length > 160 ? '…' : '' }}</p>
+        </div>
+        <div class="jm-job-actions">
+          <a *ngIf="b.jobUrl" [href]="b.jobUrl" target="_blank" rel="noopener" class="jm-btn-outline">View</a>
+          <button class="jm-btn-remove" (click)="removeBookmark(b)" title="Remove bookmark">
+            🗑 Remove
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div class="jm-empty" *ngIf="!isLoadingBookmarks && bookmarks.length === 0">
+      <div class="jm-empty-icon">🔖</div>
+      <h3 class="jm-empty-title">No saved jobs yet</h3>
+      <p class="jm-empty-sub">Go to "Find Jobs", search for a role, and click "🔖 Save" to bookmark a listing.</p>
+      <button class="btn-primary" (click)="setTab('search')">Find Jobs Now</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       TAB 3 — AI HISTORY
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab === 'history'" class="jm-panel">
+    <div class="jm-sec-header">
+      <h2 class="jm-sec-title">AI Request History <span class="jm-sec-cnt">{{ aiHistory.length }}</span></h2>
+      <p class="jm-sec-sub">Complete log of all AI operations performed on your account.</p>
+    </div>
+
+    <!-- Filter -->
+    <div class="jm-hist-filter" *ngIf="aiHistory.length > 0">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="history-filter"
+             type="text"
+             [(ngModel)]="historyFilter"
+             placeholder="Filter by type, model, status…"
+             class="jm-hist-input" />
+      <span class="jm-hist-count">{{ filteredHistory.length }} records</span>
+    </div>
+
+    <!-- Skeleton -->
+    <div class="jm-sk-list" *ngIf="isLoadingHistory">
+      <div class="jm-sk-hist" *ngFor="let i of [1,2,3,4,5,6,7,8]"></div>
+    </div>
+
+    <!-- Table -->
+    <div class="jm-hist-table" *ngIf="!isLoadingHistory && filteredHistory.length > 0">
+      <div class="jm-hist-head">
+        <span>Type</span>
+        <span>Model</span>
+        <span>Tokens</span>
+        <span>Status</span>
+        <span>Date</span>
+      </div>
+      <div class="jm-hist-row" *ngFor="let h of filteredHistory">
+        <span class="jm-hist-type">
+          {{ getHistoryIcon(h.requestType) }} {{ getHistoryLabel(h.requestType) }}
+        </span>
+        <span>
+          <span class="jm-model-badge" [class.jm-model-badge--gpt]="h.model?.includes('GPT')" [class.jm-model-badge--cl]="h.model?.includes('CLAUDE')">
+            {{ h.model || '—' }}
+          </span>
+        </span>
+        <span class="jm-hist-tokens">{{ h.tokensUsed ? (h.tokensUsed | number) : '—' }}</span>
+        <span>
+          <span class="jm-status" [class.jm-status--ok]="h.status === 'COMPLETED'" [class.jm-status--fail]="h.status === 'FAILED'" [class.jm-status--q]="h.status === 'QUEUED'">
+            {{ h.status }}
+          </span>
+        </span>
+        <span class="jm-hist-date">{{ h.createdAt | date:'MMM d, y, h:mm a' }}</span>
+      </div>
+    </div>
+
+    <div class="jm-empty" *ngIf="!isLoadingHistory && filteredHistory.length === 0 && aiHistory.length > 0">
+      <div class="jm-empty-icon">🔍</div>
+      <h3 class="jm-empty-title">No results for "{{ historyFilter }}"</h3>
+      <p class="jm-empty-sub">Try a different filter keyword.</p>
+    </div>
+
+    <div class="jm-empty" *ngIf="!isLoadingHistory && aiHistory.length === 0">
+      <div class="jm-empty-icon">🤖</div>
+      <h3 class="jm-empty-title">No AI history yet</h3>
+      <p class="jm-empty-sub">Use AI features in the Resume Builder — summaries, bullet points, cover letters — and they'll appear here.</p>
+      <a class="btn-primary" routerLink="/app/resumes">Open Resume Builder</a>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,15 @@
+<div class="template-selector">
+  <h2>Choose a Template</h2>
+  <div class="template-grid">
+    <div *ngFor="let template of templates" class="template-card" (click)="onSelect(template)">
+      <div class="thumbnail">
+        <img [src]="template.thumbnailUrl || 'assets/default-template.png'" [alt]="template.name">
+        <div class="badge" *ngIf="template.isPremium">PREMIUM</div>
+      </div>
+      <div class="info">
+        <h3>{{ template.name }}</h3>
+        <p>{{ template.description }}</p>
+      </div>
+    </div>
+  </div>
+</div>
