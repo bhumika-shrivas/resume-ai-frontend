@@ -6,7 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ConfirmDialogService } from '../../shared/services/confirm-dialog.service';
-import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { ModalComponent } from '../../shared/components/modal/modal';
 
 @Component({
   selector: 'app-dashboard-home',
