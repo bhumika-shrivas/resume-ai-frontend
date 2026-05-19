@@ -978,12 +978,11 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   generateAiSummary(): void {
-    if (!this.resumeId) return;
     this.isGeneratingSummary = true;
     const role = this.resume.targetJobTitle || 'Professional';
     const exp = this.sections.filter(s => s.sectionType === 'EXPERIENCE').map(s => s.title).join(', ');
     const currentSummary = this.resume.summary || '';
-    this.resumeService.generateAiSummary(this.resumeId, role, exp, currentSummary).subscribe({
+    this.resumeService.generateAiSummary(this.resumeId || 0, role, exp, currentSummary).subscribe({
       next: s => {
         this.resume.summary = s;
         // Update the form field so it shows in the UI and preview
@@ -1009,7 +1008,7 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
     this.isImproving.add(id);
     const form = this.getForm(section);
     const content = form.description || form.text || '';
-    this.resumeService.improveSectionWithAi(this.resumeId!, content).subscribe({
+    this.resumeService.improveSectionWithAi(this.resumeId || 0, content).subscribe({
       next: improved => {
         if (form.description !== undefined) form.description = improved;
         else if (form.text !== undefined) form.text = improved;
@@ -1022,11 +1021,10 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   runAtsCheck(): void {
-    if (!this.resumeId) return;
     this.isCheckingAts = true;
     const jd = this.jobDescription || '';
     const resumeData = this.buildResumeData();
-    this.resumeService.checkAtsScore(this.resumeId, jd, resumeData).subscribe({
+    this.resumeService.checkAtsScore(this.resumeId || 0, jd, resumeData).subscribe({
       next: report => {
         this.isCheckingAts = false;
         this.resume.atsScore = report.score;
@@ -1034,17 +1032,18 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
         this.showAtsModal = false;
         this.toastService.success(`ATS Score: ${report.score}%`);
         
-        // Save the ATS score to the database so it reflects on the dashboard
-        const finalScore = parseInt(report.score, 10) || 0;
-        this.resumeService.updateAtsScore(this.resumeId!, finalScore).subscribe({
-          next: () => {
-            console.log('ATS Score saved to database successfully.');
-          },
-          error: (err) => {
-            console.error('Failed to save ATS score to database', err);
-            this.toastService.error('Failed to save score to database. Please ensure the backend is running.');
-          }
-        });
+        // Save the ATS score to the database so it reflects on the dashboard if saved
+        if (this.resumeId) {
+          const finalScore = parseInt(report.score, 10) || 0;
+          this.resumeService.updateAtsScore(this.resumeId, finalScore).subscribe({
+            next: () => {
+              console.log('ATS Score saved to database successfully.');
+            },
+            error: (err) => {
+              console.error('Failed to save ATS score to database', err);
+            }
+          });
+        }
       },
       error: () => { this.isCheckingAts = false; this.toastService.error('ATS check failed.'); }
     });
@@ -1053,7 +1052,8 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
   // --- PREMIUM AI FEATURES ---
 
   generateCoverLetter(): void {
-    if (!this.checkPremium() || !this.resumeId || !this.clJobDescription) return;
+    if (!this.checkPremium() || !this.clJobDescription) return;
+    if (!this.resumeId) { this.toastService.error('Please save your resume first.'); return; }
     this.isGeneratingCL = true;
     this.resumeService.generateCoverLetter(this.resumeId, { jobDescription: this.clJobDescription }).subscribe({
       next: (cl) => {
@@ -1069,7 +1069,8 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   tailorResume(): void {
-    if (!this.checkPremium() || !this.resumeId || !this.tailorJobDescription) return;
+    if (!this.checkPremium() || !this.tailorJobDescription) return;
+    if (!this.resumeId) { this.toastService.error('Please save your resume first.'); return; }
     this.isTailoring = true;
     this.resumeService.tailorForJob(this.resumeId, this.tailorJobDescription).subscribe({
       next: (res: any) => {
@@ -1087,7 +1088,8 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
   }
 
   translateResume(): void {
-    if (!this.checkPremium() || !this.resumeId || !this.targetLanguage) return;
+    if (!this.checkPremium() || !this.targetLanguage) return;
+    if (!this.resumeId) { this.toastService.error('Please save your resume first.'); return; }
     this.isTranslating = true;
     this.resumeService.translateResume(this.resumeId, this.targetLanguage).subscribe({
       next: (res: any) => {
