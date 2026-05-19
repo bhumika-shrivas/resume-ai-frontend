@@ -131,7 +131,7 @@ export class LoginComponent implements OnInit {
     // In production, route through the Cloudflare tunnel URL. In dev, use localhost directly.
     const authBase = window.location.hostname === 'localhost'
       ? 'http://localhost:8081'
-      : 'https://approximately-toddler-affected-configuration.trycloudflare.com';
+      : 'https://cad-receptors-personals-concern.trycloudflare.com';
     const baseUrl = `${authBase}/oauth2/authorization/google`;
     window.location.href = `${baseUrl}?redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback?returnUrl=' + returnUrl)}`;
   }

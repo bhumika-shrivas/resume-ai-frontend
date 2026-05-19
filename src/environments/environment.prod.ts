@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://deep-beds-vanish.loca.lt'
+  apiBaseUrl: 'https://taking-phrases-speaking-observed.trycloudflare.com'
 };
