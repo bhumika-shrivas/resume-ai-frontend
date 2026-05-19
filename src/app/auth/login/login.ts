@@ -128,10 +128,10 @@ export class LoginComponent implements OnInit {
   continueWithGoogle(): void {
     console.log('[LoginComponent] Initiating Google OAuth flow');
     const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/app/dashboard';
-    // In production, route through the public tunnel URL. In dev, use localhost directly.
+    // In production, route through the Cloudflare tunnel URL. In dev, use localhost directly.
     const authBase = window.location.hostname === 'localhost'
       ? 'http://localhost:8081'
-      : 'https://chatty-rabbits-type.loca.lt';
+      : 'https://approximately-toddler-affected-configuration.trycloudflare.com';
     const baseUrl = `${authBase}/oauth2/authorization/google`;
     window.location.href = `${baseUrl}?redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback?returnUrl=' + returnUrl)}`;
   }
