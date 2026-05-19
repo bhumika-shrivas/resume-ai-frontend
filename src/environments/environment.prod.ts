@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.yourdomain.com'
+  apiBaseUrl: 'https://deep-beds-vanish.loca.lt'
 };
