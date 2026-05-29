@@ -84,19 +84,19 @@
     <!-- Analytics Tab -->
     <div *ngIf="activeTab === 'analytics'" class="tab-pane">
       <div class="stats-grid" style="margin-bottom: 24px;">
-        <div class="stat-card">
+        <div class="stat-card clickable-card" (click)="navigateTo('users')">
           <span class="stat-label">Total Users</span>
           <span class="stat-value">{{ stats.totalUsers || 0 }}</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable-card" (click)="navigateTo('users')">
           <span class="stat-label">Premium Users</span>
           <span class="stat-value premium">{{ stats.premiumUsers || 0 }}</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable-card" (click)="navigateTo('templates')">
           <span class="stat-label">Total Resumes</span>
           <span class="stat-value">{{ stats.totalResumes || 0 }}</span>
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable-card" (click)="navigateTo('ai-stats')">
           <span class="stat-label">Total AI Hits</span>
           <span class="stat-value">{{ (stats.totalAiCalls || 0) + (stats.totalAtsChecks || 0) }}</span>
         </div>
@@ -137,8 +137,10 @@
                 <tr *ngFor="let t of templates | slice:0:5">
                   <td>{{ t.name }}</td>
                   <td>{{ t.category }}</td>
-                  <td>{{ (t.usageCount).toLocaleString() }}</td>
-                  <td class="trend-up">↑ 12%</td>
+                  <td>{{ (t.usageCount || 0) | number }}</td>
+                  <td [class]="t.trend > 0 ? 'trend-up' : (t.trend < 0 ? 'trend-down' : 'trend-neutral')">
+                    {{ t.trend > 0 ? '↑' : (t.trend < 0 ? '↓' : '-') }} {{ t.trend ? (t.trend + '%') : '0%' }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -150,16 +152,16 @@
             <h3>Usage Distribution</h3>
             <div class="distribution-wrap">
               <div class="dist-circle">
-                <div class="dist-segment ai" [style.--p]="70"></div>
-                <div class="dist-segment ats" [style.--p]="30"></div>
+                <div class="dist-segment ai" [style.--p]="aiPercentage"></div>
+                <div class="dist-segment ats" [style.--p]="atsPercentage"></div>
                 <div class="dist-inner">
-                  <span class="total-val">{{ stats.totalAiCalls + stats.totalAtsChecks }}</span>
+                  <span class="total-val">{{ (stats.totalAiCalls || 0) + (stats.totalAtsChecks || 0) }}</span>
                   <span class="total-lbl">Total AI Hits</span>
                 </div>
               </div>
               <div class="dist-legend">
-                <div class="legend-item"><span class="dot ai"></span> AI Content (70%)</div>
-                <div class="legend-item"><span class="dot ats"></span> ATS Checks (30%)</div>
+                <div class="legend-item"><span class="dot ai"></span> AI Content ({{aiPercentage}}%)</div>
+                <div class="legend-item"><span class="dot ats"></span> ATS Checks ({{atsPercentage}}%)</div>
               </div>
             </div>
           </div>
@@ -167,16 +169,16 @@
           <div class="analytics-card platform-health">
             <h3>Platform Health</h3>
             <div class="health-item">
-              <span class="h-label">Server Response</span>
-              <span class="h-value success">99.9%</span>
+              <span class="h-label">Database Latency</span>
+              <span class="h-value" [class.success]="platformHealth.dbLatencyMs < 200" [class.warning]="platformHealth.dbLatencyMs >= 200">{{ platformHealth.dbLatencyMs }}ms</span>
             </div>
             <div class="health-item">
               <span class="h-label">AI Queue Time</span>
-              <span class="h-value">1.2s</span>
+              <span class="h-value">{{ platformHealth.aiQueueTimeSec | number:'1.1-2' }}s</span>
             </div>
             <div class="health-item">
               <span class="h-label">Storage Usage</span>
-              <span class="h-value warning">82%</span>
+              <span class="h-value" [class.warning]="platformHealth.storageUsagePct > 80" [class.danger]="platformHealth.storageUsagePct > 90">{{ platformHealth.storageUsagePct }}%</span>
             </div>
           </div>
         </div>

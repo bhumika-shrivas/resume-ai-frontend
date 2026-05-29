@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { ResumeService, Template } from '../services/resume.service';
 import { ConfirmDialogService } from '../shared/services/confirm-dialog.service';
@@ -29,19 +29,17 @@ export class AdminDashboardComponent implements OnInit {
   isLoading = false;
 
   // Analytics Data
-  growthData = [
-    { month: 'Jan', count: 450, percent: 30 },
-    { month: 'Feb', count: 820, percent: 55 },
-    { month: 'Mar', count: 1100, percent: 75 },
-    { month: 'Apr', count: 950, percent: 65 },
-    { month: 'May', count: 1400, percent: 95 },
-    { month: 'Jun', count: 1250, percent: 85 }
-  ];
+  growthData: { month: string, count: number, percent: number }[] = [];
 
   // New Feature States
   aiStats: any = null;
   auditLogs: any[] = [];
   pricingConfigs: any[] = [];
+  platformHealth: any = {
+    dbLatencyMs: 0,
+    storageUsagePct: 0,
+    aiQueueTimeSec: 0
+  };
   broadcastForm = {
     targetAudience: 'ALL', // 'ALL', 'PREMIUM', 'FREE'
     title: '',
@@ -57,8 +55,13 @@ export class AdminDashboardComponent implements OnInit {
     public readonly authService: AuthService,
     private readonly resumeService: ResumeService,
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly confirmDialog: ConfirmDialogService
   ) {}
+
+  navigateTo(path: string): void {
+    this.router.navigate(['/admin', path]);
+  }
 
   ngOnInit(): void {
     this.route.url.subscribe(segments => {
@@ -76,25 +79,41 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   loadStats(): void {
-    this.authService.adminGetStats().subscribe(s => {
-      this.stats = { ...this.stats, ...s };
+    this.authService.adminGetStats().subscribe({
+      next: s => { this.stats = { ...this.stats, ...s }; },
+      error: err => console.error('Error loading admin stats', err)
     });
-    this.resumeService.getAdminStats().subscribe(rs => {
-      this.stats.totalResumes = rs.totalResumes;
+    this.resumeService.getAdminStats().subscribe({
+      next: rs => { this.stats.totalResumes = rs.totalResumes; },
+      error: err => console.error('Error loading resume stats', err)
     });
-    this.authService.adminGetAiStats().subscribe(s => this.aiStats = s);
+    this.authService.adminGetAiStats().subscribe({
+      next: s => this.aiStats = s,
+      error: err => console.error('Error loading AI stats', err)
+    });
+    this.authService.adminGetPlatformHealth().subscribe({
+      next: ph => { this.platformHealth = { ...this.platformHealth, ...ph }; },
+      error: err => console.error('Error loading platform health', err)
+    });
+    this.authService.adminGetAiQueueTime().subscribe({
+      next: qt => { this.platformHealth.aiQueueTimeSec = qt; },
+      error: err => console.error('Error loading AI queue time', err)
+    });
     this.loadPricing();
   }
 
   loadPricing(): void {
-    this.authService.adminGetPricingConfig().subscribe(configs => {
-      this.pricingConfigs = configs;
-      if (configs.length === 0) {
-        this.pricingConfigs = [
-          { modelName: 'Gemini 1.5 Pro', costPer1kTokens: 0.005 },
-          { modelName: 'Gemini 1.5 Flash', costPer1kTokens: 0.001 }
-        ];
-      }
+    this.authService.adminGetPricingConfig().subscribe({
+      next: configs => {
+        this.pricingConfigs = configs;
+        if (configs.length === 0) {
+          this.pricingConfigs = [
+            { modelName: 'Gemini 1.5 Pro', costPer1kTokens: 0.005 },
+            { modelName: 'Gemini 1.5 Flash', costPer1kTokens: 0.001 }
+          ];
+        }
+      },
+      error: err => console.error('Error loading pricing config', err)
     });
   }
 
@@ -109,18 +128,75 @@ export class AdminDashboardComponent implements OnInit {
     this.isLoading = true;
     this.authService.adminGetAllUsers().subscribe({
       next: (us) => {
-        this.users = us;
+        console.log('[Admin] Loaded users:', us);
+        this.users = us || [];
+        try {
+          this.calculateGrowthData(us || []);
+        } catch (e) {
+          console.error('[Admin] Error calculating growth data:', e);
+        }
         this.isLoading = false;
       },
-      error: () => this.isLoading = false
+      error: (err) => {
+        console.error('[Admin] Error loading users:', err);
+        this.isLoading = false;
+      }
     });
+  }
+
+  calculateGrowthData(users: any[]): void {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const counts = new Map<string, number>();
+    
+    (users || []).forEach(u => {
+      if (u.createdAt) {
+        try {
+          const date = new Date(u.createdAt);
+          if (!isNaN(date.getTime())) {
+            const monthKey = months[date.getMonth()];
+            counts.set(monthKey, (counts.get(monthKey) || 0) + 1);
+          }
+        } catch (e) {}
+      }
+    });
+
+    const maxCount = Math.max(...Array.from(counts.values()), 1);
+    
+    // Get last 6 months
+    const now = new Date();
+    this.growthData = [];
+    for (let i = 5; i >= 0; i--) {
+      let d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mKey = months[d.getMonth()];
+      const count = counts.get(mKey) || 0;
+      this.growthData.push({
+        month: mKey,
+        count: count,
+        percent: Math.round((count / maxCount) * 100)
+      });
+    }
+  }
+
+  get aiPercentage(): number {
+    const aiCalls = this.stats.totalAiCalls || 0;
+    const atsChecks = this.stats.totalAtsChecks || 0;
+    const total = aiCalls + atsChecks;
+    return total === 0 ? 0 : Math.round((aiCalls / total) * 100);
+  }
+
+  get atsPercentage(): number {
+    const aiCalls = this.stats.totalAiCalls || 0;
+    const atsChecks = this.stats.totalAtsChecks || 0;
+    const total = aiCalls + atsChecks;
+    return total === 0 ? 0 : Math.round((atsChecks / total) * 100);
   }
 
   loadTemplates(): void {
     this.isLoading = true;
     this.resumeService.getAdminAllTemplates().subscribe({
       next: (ts) => {
-        this.templates = ts;
+        // Sort templates by usage count descending for the top templates widget
+        this.templates = ts.sort((a,b) => (b.usageCount || 0) - (a.usageCount || 0));
         this.isLoading = false;
       },
       error: () => this.isLoading = false
@@ -137,6 +213,10 @@ export class AdminDashboardComponent implements OnInit {
     if (tab === 'users') {
       this.loadUsers();
       this.loadStats();
+    }
+    if (tab === 'analytics') {
+      this.loadStats();
+      this.loadTemplates();
     }
     if (tab === 'audit') this.loadAuditLogs();
     if (tab === 'ai') this.loadStats();

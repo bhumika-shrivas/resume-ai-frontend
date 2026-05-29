@@ -30,6 +30,17 @@
   gap: 8px;
 }
 
+.stat-card.clickable-card {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.stat-card.clickable-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-500);
+}
+
 .stat-label {
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -196,6 +207,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
+  height: 100%;
   gap: 12px;
   position: relative;
 }

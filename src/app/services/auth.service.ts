@@ -300,6 +300,14 @@ export class AuthService {
     return this.http.get<any[]>(`${environment.apiBaseUrl}/api/v1/admin/audit-logs`);
   }
 
+  adminGetPlatformHealth(): Observable<any> {
+    return this.http.get<any>(`${environment.apiBaseUrl}/api/v1/admin/platform-health`);
+  }
+
+  adminGetAiQueueTime(): Observable<number> {
+    return this.http.get<number>(`${environment.apiBaseUrl}/api/v1/ai/admin/health/queue-time`);
+  }
+
   adminSendBroadcast(recipientIds: string[], title: string, message: string): Observable<any> {
     return this.http.post<any>(`${environment.apiBaseUrl}/api/v1/notifications/send-bulk`, {
       recipientIds,

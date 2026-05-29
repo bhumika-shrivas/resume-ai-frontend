@@ -977,6 +977,14 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
     return true;
   }
 
+  handleAiError(err: any, fallbackMsg: string): void {
+    if (err?.status === 403) {
+      this.showPremiumModal = true;
+    } else {
+      this.toastService.error(err?.error?.message || err?.error?.error || fallbackMsg);
+    }
+  }
+
   generateAiSummary(): void {
     this.isGeneratingSummary = true;
     const role = this.resume.targetJobTitle || 'Professional';
@@ -997,7 +1005,7 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
         this.isGeneratingSummary = false;
         this.toastService.success('AI summary generated!');
       },
-      error: () => { this.isGeneratingSummary = false; this.toastService.error('AI failed.'); }
+      error: (err) => { this.isGeneratingSummary = false; this.handleAiError(err, 'AI failed.'); }
     });
   }
 
@@ -1016,7 +1024,7 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
         this.isImproving.delete(id);
         this.toastService.success('Improved!');
       },
-      error: () => { this.isImproving.delete(id); this.toastService.error('AI failed.'); }
+      error: (err) => { this.isImproving.delete(id); this.handleAiError(err, 'AI failed.'); }
     });
   }
 
@@ -1045,7 +1053,7 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
           });
         }
       },
-      error: () => { this.isCheckingAts = false; this.toastService.error('ATS check failed.'); }
+      error: (err) => { this.isCheckingAts = false; this.showAtsModal = false; this.handleAiError(err, 'ATS check failed.'); }
     });
   }
 
@@ -1061,9 +1069,9 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
         this.isGeneratingCL = false;
         this.toastService.success('Cover Letter generated!');
       },
-      error: () => {
+      error: (err) => {
         this.isGeneratingCL = false;
-        this.toastService.error('Failed to generate Cover Letter.');
+        this.handleAiError(err, 'Failed to generate Cover Letter.');
       }
     });
   }
@@ -1080,9 +1088,9 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
         this.triggerPreviewUpdate();
         this.toastService.success('Resume tailored to Job Description!');
       },
-      error: () => {
+      error: (err) => {
         this.isTailoring = false;
-        this.toastService.error('Failed to tailor resume.');
+        this.handleAiError(err, 'Failed to tailor resume.');
       }
     });
   }
@@ -1107,9 +1115,9 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
           this.toastService.error('Translation formatting error.');
         }
       },
-      error: () => {
+      error: (err) => {
         this.isTranslating = false;
-        this.toastService.error('Failed to translate resume.');
+        this.handleAiError(err, 'Failed to translate resume.');
       }
     });
   }
@@ -1129,7 +1137,7 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
         this.isSuggestingSkills.delete(id);
         this.toastService.success(`${skills.length} skills suggested!`);
       },
-      error: () => { this.isSuggestingSkills.delete(id); this.toastService.error('Skill suggestion failed.'); }
+      error: (err) => { this.isSuggestingSkills.delete(id); this.handleAiError(err, 'Skill suggestion failed.'); }
     });
   }
 
@@ -1149,7 +1157,7 @@ export class ResumeBuilderComponent implements OnInit, OnDestroy, AfterViewInit 
         this.isGeneratingBullets.delete(id);
         this.toastService.success('AI bullets generated!');
       },
-      error: () => { this.isGeneratingBullets.delete(id); this.toastService.error('Bullet generation failed.'); }
+      error: (err) => { this.isGeneratingBullets.delete(id); this.handleAiError(err, 'Bullet generation failed.'); }
     });
   }
 

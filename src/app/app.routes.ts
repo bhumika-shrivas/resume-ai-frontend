@@ -22,7 +22,7 @@ export const routes: Routes = [
   // Public auth routes
   { path: 'login', component: LoginComponent, canActivate: [publicOnlyGuard] },
   { path: 'register', component: RegisterComponent, canActivate: [publicOnlyGuard] },
-  { path: 'auth/callback', component: OauthCallbackComponent },
+  { path: 'oauth-callback', component: OauthCallbackComponent },
 
   // Marketing landing page — redirect logged-in users to dashboard
   { path: '', component: LandingComponent, canActivate: [publicOnlyGuard] },

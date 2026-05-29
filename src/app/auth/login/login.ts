@@ -133,6 +133,6 @@ export class LoginComponent implements OnInit {
       ? 'http://localhost:8081'
       : 'https://cad-receptors-personals-concern.trycloudflare.com';
     const baseUrl = `${authBase}/oauth2/authorization/google`;
-    window.location.href = `${baseUrl}?redirect_uri=${encodeURIComponent(window.location.origin + '/auth/callback?returnUrl=' + returnUrl)}`;
+    window.location.href = `${baseUrl}?redirect_uri=${encodeURIComponent(window.location.origin + '/oauth-callback?returnUrl=' + returnUrl)}`;
   }
 }

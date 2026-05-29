@@ -391,7 +391,7 @@ export class ResumeService {
   }
 
   getAdminAllTemplates(): Observable<Template[]> {
-    return this.http.get<Template[]>(`${this.templateUrl}/admin/all`);
+    return this.http.get<Template[]>(this.templateUrl);
   }
 
   getFreeTemplates(): Observable<Template[]> {
